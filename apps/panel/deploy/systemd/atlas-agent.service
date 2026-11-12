@@ -1,0 +1,47 @@
+[Unit]
+Description=Atlas privileged agent
+Documentation=https://atlas.example/docs/agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/atlas-agent \
+    -socket /run/atlas/agent.sock \
+    -key /etc/atlas/agent.key \
+    -journal /var/log/atlas/agent-journal.jsonl \
+    -panel-user atlas
+
+# Root is required for useradd, quota and service restarts. The process is
+# hardened as far as those duties allow, and its entire interface is a socket
+# that only the panel user can open.
+User=root
+Group=root
+
+RuntimeDirectory=atlas
+RuntimeDirectoryMode=0750
+StateDirectory=atlas
+LogsDirectory=atlas
+
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=read-only
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+
+Restart=on-failure
+RestartSec=2s
+
+# A crash loop on a hosting server is an outage; stop trying and let the
+# operator see the journal rather than hammering the machine.
+StartLimitBurst=5
+StartLimitIntervalSec=120
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,31 @@
+# Dependencies are installed per app, never committed.
+**/vendor/
+**/node_modules/
+**/public/build/
+
+# Secrets and local state
+**/.env
+**/.env.backup
+**/.env.production
+**/.phpunit.result.cache
+**/.phpunit.cache/
+**/storage/logs/*.log
+**/storage/framework/cache/data/*
+**/storage/framework/sessions/*
+**/storage/framework/views/*
+**/storage/app/licence/demo-private.key
+**/bootstrap/cache/*.php
+
+# Local databases
+**/database/*.sqlite
+
+# The sandbox agent's fake home directory: created on demand, never shipped.
+**/storage/app/sandbox/
+docs/
+tools/
+
+# Build output
+dist/
+*.tar.gz
+*.sig
+

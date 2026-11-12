@@ -1,0 +1,31 @@
+[Unit]
+Description=Atlas panel scheduler
+Documentation=https://atlas.example/docs
+After=network-online.target mariadb.service atlas-agent.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=atlas
+Group=atlas
+WorkingDirectory=/opt/atlas/current
+
+# Requests are served by nginx + php-fpm (see deploy/nginx and deploy/php-fpm).
+# This unit only runs Laravel's scheduler: licence refresh, certificate checks
+# and backup pruning.
+ExecStart=/usr/bin/php /opt/atlas/current/artisan schedule:work
+
+Restart=always
+RestartSec=5s
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/atlas/current/storage /var/lib/atlas
+
+StandardOutput=append:/var/log/atlas/scheduler.log
+StandardError=append:/var/log/atlas/scheduler.log
+
+[Install]
+WantedBy=multi-user.target

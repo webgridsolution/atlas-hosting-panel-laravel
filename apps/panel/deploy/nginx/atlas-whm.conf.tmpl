@@ -1,0 +1,54 @@
+# Atlas WHM console — template. {{ADMIN_PORT}} is replaced by atlas-install.
+#
+# The port is illustrative. If the installer was given a different --admin-port,
+# this file is generated with that value; the panel prints the real URL.
+
+server {
+    listen {{ADMIN_PORT}} ssl http2;
+    listen [::]:{{ADMIN_PORT}} ssl http2;
+
+    server_name _;
+
+    # Self-signed until an operator points a hostname here and presses
+    # "Issue certificate" in WHM. Browsers warn once; that is expected.
+    ssl_certificate     /etc/atlas/tls/bootstrap.crt;
+    ssl_certificate_key /etc/atlas/tls/bootstrap.key;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+    ssl_session_cache   shared:AtlasWHM:10m;
+
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "same-origin" always;
+
+    # A control panel is a high-value target: stricter limits than a website.
+    client_max_body_size 16m;
+    limit_req zone=atlas_login burst=10 nodelay;
+
+    root /opt/atlas/current/public;
+    index index.php;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/atlas-panel.sock;
+        fastcgi_read_timeout 120s;
+    }
+
+    location ~ /\.(?!well-known) {
+        deny all;
+    }
+
+    # Only the panel's own assets are public.
+    location ~* ^/(build|assets)/ {
+        expires 7d;
+        access_log off;
+    }
+
+    access_log /var/log/atlas/whm.access.log;
+    error_log  /var/log/atlas/whm.error.log;
+}
